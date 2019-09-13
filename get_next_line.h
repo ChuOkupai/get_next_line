@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/10 15:17:39 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/09/12 16:25:31 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,9 @@
 
 typedef struct	s_file
 {
-	char	*buf;
+	char	buf[BUFF_SIZE + 1];
 	int		fd;
+	ssize_t	cursor;
 }				t_file;
 
 int				get_next_line(const int fd, char **line);
