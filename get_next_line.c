@@ -6,54 +6,56 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/12 17:39:42 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/09/14 21:59:14 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "get_next_line.h"
 
-static char		*line_copy(t_file *f, char *line, size_t *len, size_t n)
-{
-	char *d;
-
-	d = ft_strnew(*len + n);
-	ft_memcpy(d, line, len);
-	free(line);
-	*len += n;
-	if ((f->cursor += n) == BUFF_SIZE)
-		f->cursor = 0;
-	return (ft_strncat(d, f->buf, n));
-}
-
 static int		read_line(t_file *f, char **line)
 {
-	size_t	i;
+	char	*b;
 	ssize_t	n;
 
-	i = 0;
-	if (!(t = ft_strchr(f->buf + f->cursor, '\n')))
-		t = f->buf[BUFF_SIZE];
-	if ((n = t - f->buf) < BUFF_SIZE)
+	/*ft_memprint(f->buf, BUFF_SIZE);
+	ft_putendl("cur:");
+	ft_memprint(f->cur, ft_strlen(f->cur));*/
+	if ((b = ft_strchr(f->cur, '\n')))
 	{
-		*line = line_copy(f, *line, i, n);
-		return (1);
+		*b = '\0';
+		n = b - f->cur;
+		*line = ft_strdup(f->cur);
+		f->cur = b + 1;
 	}
-	n = 0;
-	while ((n = read(f->fd, f->buf, BUFF_SIZE)) > 0)
+	else
 	{
-		ft_memprint(f->buf, n);
-		printf("cur = %lu\n", n);
-		*line = line_copy(f, *line, i, n);
+		*line = ft_strdup(f->cur);
+		n = BUFF_SIZE;
 	}
-	if (n < 0)
+	while (n == BUFF_SIZE && (n = read(f->fd, f->buf, BUFF_SIZE)) > 0)
 	{
+		f->buf[n] = '\0';
+		if ((f->cur = ft_strchr(f->buf, '\n')))
+		{
+			*f->cur = '\0';
+			n = f->cur++ - f->buf;
+		}
+		else
+			f->cur = f->buf + BUFF_SIZE;
+		if (n)
+		{
+			b = ft_strjoin(*line, f->buf);
+			free(*line);
+			*line = b;
+		}
+	}
+	if (n < 1)
 		ft_memdel((void**)line);
-		return (-1);
-	}
-	return (n != 0);
+	if (n > 0)
+		n = 1;
+	return (n);
 }
 
 int				get_next_line(const int fd, char **line)
@@ -62,10 +64,10 @@ int				get_next_line(const int fd, char **line)
 
 	if (f.fd != fd)
 	{
+		ft_bzero(f.buf, BUFF_SIZE); // debug
 		f.buf[0] = '\0';
-		f.buf[BUFF_SIZE] = '\0';
+		f.cur = f.buf;
 		f.fd = fd;
-		f.cursor = 0;
 	}
 	*line = ft_strnew(0);
 	return (read_line(&f, line));
