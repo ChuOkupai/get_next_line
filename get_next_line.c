@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/14 21:59:14 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/09/15 11:34:07 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,6 @@ static int		read_line(t_file *f, char **line)
 	char	*b;
 	ssize_t	n;
 
-	/*ft_memprint(f->buf, BUFF_SIZE);
-	ft_putendl("cur:");
-	ft_memprint(f->cur, ft_strlen(f->cur));*/
 	if ((b = ft_strchr(f->cur, '\n')))
 	{
 		*b = '\0';
@@ -53,7 +50,7 @@ static int		read_line(t_file *f, char **line)
 	}
 	if (n < 1)
 		ft_memdel((void**)line);
-	if (n > 0)
+	else
 		n = 1;
 	return (n);
 }
@@ -69,6 +66,5 @@ int				get_next_line(const int fd, char **line)
 		f.cur = f.buf;
 		f.fd = fd;
 	}
-	*line = ft_strnew(0);
 	return (read_line(&f, line));
 }
