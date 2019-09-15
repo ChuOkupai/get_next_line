@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/15 11:34:07 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/09/15 15:03:59 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,44 +14,37 @@
 #include <unistd.h>
 #include "get_next_line.h"
 
+static int		fill_buffer(t_file *f, char **line)
+{
+	char *b;
+
+	b = f->cur;
+	if ((f->cur = ft_strchr(f->cur, '\n')))
+		*f->cur++ = '\0';
+	if (*line)
+	{
+		b = ft_strjoin(*line, b);
+		free(*line);
+		*line = b;
+	}
+	else
+		*line = ft_strdup(b);
+	return (!f->cur);
+}
+
 static int		read_line(t_file *f, char **line)
 {
-	char	*b;
-	ssize_t	n;
+	ssize_t n;
 
-	if ((b = ft_strchr(f->cur, '\n')))
-	{
-		*b = '\0';
-		n = b - f->cur;
-		*line = ft_strdup(f->cur);
-		f->cur = b + 1;
-	}
-	else
-	{
-		*line = ft_strdup(f->cur);
-		n = BUFF_SIZE;
-	}
-	while (n == BUFF_SIZE && (n = read(f->fd, f->buf, BUFF_SIZE)) > 0)
+	*line = NULL;
+	n = 1;
+	while (n && fill_buffer(f, line)
+		&& (n = read(f->fd, f->buf, BUFF_SIZE)) >= 0)
 	{
 		f->buf[n] = '\0';
-		if ((f->cur = ft_strchr(f->buf, '\n')))
-		{
-			*f->cur = '\0';
-			n = f->cur++ - f->buf;
-		}
-		else
-			f->cur = f->buf + BUFF_SIZE;
-		if (n)
-		{
-			b = ft_strjoin(*line, f->buf);
-			free(*line);
-			*line = b;
-		}
+		f->cur = f->buf;
 	}
-	if (n < 1)
-		ft_memdel((void**)line);
-	else
-		n = 1;
+	(n > 0 || (!n && **line)) ? n = 1 : ft_memdel((void**)line);
 	return (n);
 }
 
@@ -61,7 +54,6 @@ int				get_next_line(const int fd, char **line)
 
 	if (f.fd != fd)
 	{
-		ft_bzero(f.buf, BUFF_SIZE); // debug
 		f.buf[0] = '\0';
 		f.cur = f.buf;
 		f.fd = fd;
