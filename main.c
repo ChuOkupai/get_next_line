@@ -1,27 +1,34 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.h                                    :+:      :+:    :+:   */
+/*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/21 13:15:32 by asoursou         ###   ########.fr       */
+/*   Created: 2019/09/13 23:56:43 by asoursou          #+#    #+#             */
+/*   Updated: 2019/09/21 14:07:59 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef GET_NEXT_LINE_H
-# define GET_NEXT_LINE_H
-# include <libft.h>
-# define BUFF_SIZE 64
 
-typedef struct	s_file
+#include <fcntl.h>
+#include <get_next_line.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int	main(int argc, char **argv)
 {
-	char	buf[BUFF_SIZE + 1];
-	char	*cur;
+	char	*s;
 	int		fd;
-}				t_file;
 
-int				get_next_line(const int fd, char **line);
-
-#endif
+	if (argc == 2 && (fd = open(argv[1], O_RDONLY)) > 0)
+	{
+		while (get_next_line(fd, &s) > 0)
+		{
+			ft_putendl(s);
+			free(s);
+		}
+		close(fd);
+	}
+	return (0);
+}
