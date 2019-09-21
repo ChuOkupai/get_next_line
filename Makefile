@@ -20,6 +20,6 @@ fclean: clean
 re: fclean all
 
 %.out: %.c $(NAME).o $(NAME).h
-	$(CC) $(CFLAGS) $< -o $@ -I. -I./libft $(LDFLAGS) $(NAME).o
+	$(CC) $(CFLAGS) $< -o $@ $(NAME).o -I. -I./libft $(LDFLAGS)
 
 .PHONY: all clean fclean re

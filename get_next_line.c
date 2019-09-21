@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/21 14:37:33 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/09/21 20:25:52 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 
 static t_file	*find_file(t_list **l, const int fd)
 {
-	t_file f;
+	t_file *f;
 	t_list *e;
 
 	e = *l;
@@ -24,11 +24,15 @@ static t_file	*find_file(t_list **l, const int fd)
 		e = e->next;
 	if (!e)
 	{
-		f.buf[0] = '\0';
-		f.fd = fd;
-		if (!(e = ft_lstnew(&f, sizeof(t_file))))
+		if (!(e = (t_list*)malloc(sizeof(t_list))))
 			return (NULL);
-		((t_file*)e->content)->cur = ((t_file*)e->content)->buf;
+		f = (t_file*)malloc(sizeof(t_file));
+		f->buf = (char*)malloc((BUFF_SIZE + 1) * sizeof(char));
+		f->buf[0] = '\0';
+		f->cur = f->buf;
+		f->fd = fd;
+		e->content = f;
+		e->content_size = sizeof(t_file);
 		ft_lstadd(l, e);
 	}
 	return (e->content);
@@ -50,6 +54,8 @@ static void		remove_file(t_list **l, t_file *f)
 		p->next = e->next;
 	else
 		*l = e->next;
+	free(f->buf);
+	free(f);
 	free(e);
 }
 
