@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/21 20:25:52 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/09/25 20:55:51 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,49 +14,47 @@
 #include <unistd.h>
 #include "get_next_line.h"
 
-static t_file	*find_file(t_list **l, const int fd)
+static t_file	*create_file(t_file **l, const int fd)
 {
 	t_file *f;
-	t_list *e;
 
-	e = *l;
-	while (e && ((t_file*)e->content)->fd != fd)
-		e = e->next;
-	if (!e)
+	if ((f = (t_file*)malloc(sizeof(t_file))))
 	{
-		if (!(e = (t_list*)malloc(sizeof(t_list))))
-			return (NULL);
-		f = (t_file*)malloc(sizeof(t_file));
-		f->buf = (char*)malloc((BUFF_SIZE + 1) * sizeof(char));
-		f->buf[0] = '\0';
-		f->cur = f->buf;
-		f->fd = fd;
-		e->content = f;
-		e->content_size = sizeof(t_file);
-		ft_lstadd(l, e);
+		if ((f->buf = (char*)malloc((BUFF_SIZE + 1) * sizeof(char))))
+		{
+			f->buf[0] = '\0';
+			f->cur = f->buf;
+			f->fd = fd;
+			f->next = *l;
+			*l = f;
+		}
+		else
+			ft_memdel((void**)&f);
 	}
-	return (e->content);
+	return (f);
 }
 
-static void		remove_file(t_list **l, t_file *f)
+static t_file	*search_file(t_file **l, const int fd)
 {
-	t_list *e;
-	t_list *p;
+	t_file *f;
+	t_file *p;
 
 	p = NULL;
-	e = *l;
-	while (e && (t_file*)e->content != f)
+	f = *l;
+	while (f && f->fd != fd)
 	{
-		p = e;
-		e = e->next;
+		p = f;
+		f = f->next;
 	}
+	if (!f)
+		return (create_file(l, fd));
 	if (p)
-		p->next = e->next;
-	else
-		*l = e->next;
-	free(f->buf);
-	free(f);
-	free(e);
+	{
+		p->next = f->next;
+		f->next = *l;
+		*l = f;
+	}
+	return (f);
 }
 
 static int		fill_buffer(t_file *f, char **line)
@@ -96,12 +94,16 @@ static int		read_line(t_file *f, char **line)
 int				get_next_line(const int fd, char **line)
 {
 	int				r;
-	static t_list	*l = NULL;
+	static t_file	*l = NULL;
 	t_file			*f;
 
-	if (!(f = find_file(&l, fd)))
+	if (!(f = search_file(&l, fd)))
 		return (-1);
 	if ((r = read_line(f, line)) < 1)
-		remove_file(&l, f);
+	{
+		l = l->next;
+		free(f->buf);
+		free(f);
+	}
 	return (r);
 }
