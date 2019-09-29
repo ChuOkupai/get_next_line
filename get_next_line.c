@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/29 11:01:46 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/09/29 18:03:21 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include "get_next_line.h"
 
-static t_file	*searchfd(t_file **l, const int fd)
+static t_file	*search_fd(t_file **l, const int fd)
 {
 	t_file *f;
 	t_file *p;
@@ -28,55 +28,58 @@ static t_file	*searchfd(t_file **l, const int fd)
 	}
 	if (f)
 		(p) ? (p->next = f->next) : (*l = NULL);
-	else if (!read(fd, NULL, 0) && (f = (t_file*)malloc(sizeof(t_file))))
-	{
-		f->buf = ft_strnew(0);
+	else if ((f = (t_file*)ft_memalloc(sizeof(t_file))))
 		f->fd = fd;
-	}
+	if (f)
+		f->next = *l;
 	return (f);
 }
 
-static int		readline(t_file *f, char **line)
+static int		read_line(t_file *f, char **line)
 {
 	char	buf[BUFF_SIZE + 1];
-	char	*b;
 	int		n;
 
-	*line = NULL;
-	while (!ft_strchr(f->buf, '\n') && (n = read(f->fd, buf, BUFF_SIZE)) > 0)
+	n = 0;
+	while (!(f->buf && ft_strchr(f->buf, '\n'))
+		&& (n = read(f->fd, buf, BUFF_SIZE)) > 0)
 	{
 		buf[n] = '\0';
-		b = f->buf;
-		f->buf = ft_strjoin(f->buf, buf);
-		free(b);
+		*line = ft_strjoin(((f->buf) ? f->buf : ""), buf);
+		if (f->buf)
+			free(f->buf);
+		f->buf = *line;
 	}
-	if (f->buf[n = ft_strchrnul(f->buf, '\n') - f->buf] == '\n')
-		f->buf[n++] = '\0';
-	*line = ft_strdup(f->buf);
-	b = f->buf;
-	if (n)
-		f->buf = ft_strdup(f->buf + n);
-	free(b);
-	return (n > 0);
+	if (n < 0)
+	{
+		if (f->buf)
+			ft_memdel((void**)&f->buf);
+		if (*line)
+			ft_memdel((void**)line);
+	}
+	return (n);
 }
 
 int				get_next_line(const int fd, char **line)
 {
 	static t_file	*l = NULL;
 	t_file			*f;
+	char			*b;
 	int				r;
 
-	if (!(f = searchfd(&l, fd)))
+	if (!(f = search_fd(&l, fd)) || read_line(f, line) < 0)
 		return (-1);
-	if ((r = readline(f, line)) < 1)
+	r = 0;
+	if ((b = f->buf))
 	{
-		free(f);
-		ft_memdel((void**)line);
+		if (b[r = ft_strchrnul(b, '\n') - b] == '\n')
+			b[r++] = '\0';
+		*line = ft_strdup(b);
+		f->buf = (b[r]) ? ft_strdup(b + r) : NULL;
+		free(b);
 	}
 	else
-	{
-		f->next = l;
-		l = f;
-	}
-	return (r);
+		*line = NULL;
+	(r < 1) ? free(f) : (l = f);
+	return (r > 0);
 }
