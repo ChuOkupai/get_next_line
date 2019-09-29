@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/25 20:55:51 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/09/29 11:01:46 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,27 +14,7 @@
 #include <unistd.h>
 #include "get_next_line.h"
 
-static t_file	*create_file(t_file **l, const int fd)
-{
-	t_file *f;
-
-	if ((f = (t_file*)malloc(sizeof(t_file))))
-	{
-		if ((f->buf = (char*)malloc((BUFF_SIZE + 1) * sizeof(char))))
-		{
-			f->buf[0] = '\0';
-			f->cur = f->buf;
-			f->fd = fd;
-			f->next = *l;
-			*l = f;
-		}
-		else
-			ft_memdel((void**)&f);
-	}
-	return (f);
-}
-
-static t_file	*search_file(t_file **l, const int fd)
+static t_file	*searchfd(t_file **l, const int fd)
 {
 	t_file *f;
 	t_file *p;
@@ -46,64 +26,57 @@ static t_file	*search_file(t_file **l, const int fd)
 		p = f;
 		f = f->next;
 	}
-	if (!f)
-		return (create_file(l, fd));
-	if (p)
+	if (f)
+		(p) ? (p->next = f->next) : (*l = NULL);
+	else if (!read(fd, NULL, 0) && (f = (t_file*)malloc(sizeof(t_file))))
 	{
-		p->next = f->next;
-		f->next = *l;
-		*l = f;
+		f->buf = ft_strnew(0);
+		f->fd = fd;
 	}
 	return (f);
 }
 
-static int		fill_buffer(t_file *f, char **line)
+static int		readline(t_file *f, char **line)
 {
-	char *b;
-
-	b = f->cur;
-	if ((f->cur = ft_strchr(f->cur, '\n')))
-		*f->cur++ = '\0';
-	if (*line)
-	{
-		b = ft_strjoin(*line, b);
-		free(*line);
-		*line = b;
-	}
-	else
-		*line = ft_strdup(b);
-	return (!f->cur);
-}
-
-static int		read_line(t_file *f, char **line)
-{
-	ssize_t n;
+	char	buf[BUFF_SIZE + 1];
+	char	*b;
+	int		n;
 
 	*line = NULL;
-	n = 1;
-	while (n && fill_buffer(f, line)
-		&& (n = read(f->fd, f->buf, BUFF_SIZE)) >= 0)
+	while (!ft_strchr(f->buf, '\n') && (n = read(f->fd, buf, BUFF_SIZE)) > 0)
 	{
-		f->buf[n] = '\0';
-		f->cur = f->buf;
+		buf[n] = '\0';
+		b = f->buf;
+		f->buf = ft_strjoin(f->buf, buf);
+		free(b);
 	}
-	(n > 0 || (!n && **line)) ? n = 1 : ft_memdel((void**)line);
-	return (n);
+	if (f->buf[n = ft_strchrnul(f->buf, '\n') - f->buf] == '\n')
+		f->buf[n++] = '\0';
+	*line = ft_strdup(f->buf);
+	b = f->buf;
+	if (n)
+		f->buf = ft_strdup(f->buf + n);
+	free(b);
+	return (n > 0);
 }
 
 int				get_next_line(const int fd, char **line)
 {
-	int				r;
 	static t_file	*l = NULL;
 	t_file			*f;
+	int				r;
 
-	if (!(f = search_file(&l, fd)))
+	if (!(f = searchfd(&l, fd)))
 		return (-1);
-	if ((r = read_line(f, line)) < 1)
+	if ((r = readline(f, line)) < 1)
 	{
-		l = l->next;
-		free(f->buf);
 		free(f);
+		ft_memdel((void**)line);
+	}
+	else
+	{
+		f->next = l;
+		l = f;
 	}
 	return (r);
 }
