@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/29 18:03:21 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/09/29 18:22:23 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,8 +54,7 @@ static int		read_line(t_file *f, char **line)
 	{
 		if (f->buf)
 			ft_memdel((void**)&f->buf);
-		if (*line)
-			ft_memdel((void**)line);
+		*line = NULL;
 	}
 	return (n);
 }
