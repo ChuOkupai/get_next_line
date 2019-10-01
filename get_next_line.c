@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/29 18:22:23 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/10/01 21:10:37 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,11 +28,39 @@ static t_file	*search_fd(t_file **l, const int fd)
 	}
 	if (f)
 		(p) ? (p->next = f->next) : (*l = NULL);
-	else if ((f = (t_file*)ft_memalloc(sizeof(t_file))))
+	else if (!read(fd, NULL, 0) && (f = (t_file*)ft_memalloc(sizeof(t_file))))
 		f->fd = fd;
 	if (f)
 		f->next = *l;
 	return (f);
+}
+
+static int		copy_line(t_file *f, char **line, char *buf)
+{
+	int n;
+
+	n = 0;
+	if (buf)
+	{
+		n = ft_strchrnul(buf, '\n') - buf;
+		(buf[n] == '\n') ? (buf[n++] = '\0') : (n = 0);
+		*line = ft_strjoin(((f->buf) ? f->buf : ""), buf);
+		if (f->buf)
+			free(f->buf);
+		if (n)
+			f->buf = (buf[n]) ? ft_strdup(buf + n) : NULL;
+		else
+			f->buf = *line;
+	}
+	else if ((buf = f->buf))
+	{
+		if (buf[n = ft_strchrnul(buf, '\n') - buf] == '\n')
+			buf[n++] = '\0';
+		*line = ft_strdup(buf);
+		f->buf = (buf[n]) ? ft_strdup(buf + n) : NULL;
+		free(buf);
+	}
+	return (n > 0);
 }
 
 static int		read_line(t_file *f, char **line)
@@ -40,45 +68,33 @@ static int		read_line(t_file *f, char **line)
 	char	buf[BUFF_SIZE + 1];
 	int		n;
 
-	n = 0;
-	while (!(f->buf && ft_strchr(f->buf, '\n'))
-		&& (n = read(f->fd, buf, BUFF_SIZE)) > 0)
+	if (!(f->buf && ft_strchr(f->buf, '\n')))
 	{
-		buf[n] = '\0';
-		*line = ft_strjoin(((f->buf) ? f->buf : ""), buf);
-		if (f->buf)
-			free(f->buf);
-		f->buf = *line;
+		while ((n = read(f->fd, buf, BUFF_SIZE)) > 0)
+		{
+			buf[n] = '\0';
+			if (copy_line(f, line, buf))
+				return (1);
+		}
+		if (n < 0)
+		{
+			if (f->buf)
+				ft_memdel((void**)&f->buf);
+			*line = NULL;
+			return (-1);
+		}
 	}
-	if (n < 0)
-	{
-		if (f->buf)
-			ft_memdel((void**)&f->buf);
-		*line = NULL;
-	}
-	return (n);
+	return (copy_line(f, line, NULL));
 }
 
 int				get_next_line(const int fd, char **line)
 {
 	static t_file	*l = NULL;
 	t_file			*f;
-	char			*b;
 	int				r;
 
-	if (!(f = search_fd(&l, fd)) || read_line(f, line) < 0)
+	if (!(f = search_fd(&l, fd)) || (r = read_line(f, line)) < 0)
 		return (-1);
-	r = 0;
-	if ((b = f->buf))
-	{
-		if (b[r = ft_strchrnul(b, '\n') - b] == '\n')
-			b[r++] = '\0';
-		*line = ft_strdup(b);
-		f->buf = (b[r]) ? ft_strdup(b + r) : NULL;
-		free(b);
-	}
-	else
-		*line = NULL;
 	(r < 1) ? free(f) : (l = f);
-	return (r > 0);
+	return (r);
 }
