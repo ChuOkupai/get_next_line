@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/13 23:56:43 by asoursou          #+#    #+#             */
-/*   Updated: 2019/09/25 19:54:09 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/10/02 11:30:34 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,8 @@ int		read_all(int *f, int size)
 		{
 			if (get_next_line(f[i], &s) > 0)
 			{
-				ft_putendl(s);
+				ft_putstr(s);
+				ft_putendl("$");
 				free(s);
 				n++;
 			}

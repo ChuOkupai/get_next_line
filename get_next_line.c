@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/10/01 21:10:37 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/10/02 22:12:27 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,32 +35,29 @@ static t_file	*search_fd(t_file **l, const int fd)
 	return (f);
 }
 
-static int		copy_line(t_file *f, char **line, char *buf)
+static int		join_line(t_file *f, char **line, char *b)
 {
 	int n;
 
-	n = 0;
-	if (buf)
+	if (b[n = ft_strchrnul(b, '\n') - b] == '\n')
+		b[n++] = '\0';
+	else if (b != f->buf)
+		n = 0;
+	if (b != f->buf)
 	{
-		n = ft_strchrnul(buf, '\n') - buf;
-		(buf[n] == '\n') ? (buf[n++] = '\0') : (n = 0);
-		*line = ft_strjoin(((f->buf) ? f->buf : ""), buf);
+		*line = ft_strjoin(((f->buf) ? f->buf : ""), b);
 		if (f->buf)
 			free(f->buf);
 		if (n)
-			f->buf = (buf[n]) ? ft_strdup(buf + n) : NULL;
+			f->buf = (b[n]) ? ft_strdup(b + n) : NULL;
 		else
 			f->buf = *line;
+		return (n > 0);
 	}
-	else if ((buf = f->buf))
-	{
-		if (buf[n = ft_strchrnul(buf, '\n') - buf] == '\n')
-			buf[n++] = '\0';
-		*line = ft_strdup(buf);
-		f->buf = (buf[n]) ? ft_strdup(buf + n) : NULL;
-		free(buf);
-	}
-	return (n > 0);
+	*line = ft_strdup(b);
+	f->buf = (b[n]) ? ft_strdup(b + n) : NULL;
+	free(b);
+	return (1);
 }
 
 static int		read_line(t_file *f, char **line)
@@ -73,7 +70,7 @@ static int		read_line(t_file *f, char **line)
 		while ((n = read(f->fd, buf, BUFF_SIZE)) > 0)
 		{
 			buf[n] = '\0';
-			if (copy_line(f, line, buf))
+			if (join_line(f, line, buf))
 				return (1);
 		}
 		if (n < 0)
@@ -84,7 +81,7 @@ static int		read_line(t_file *f, char **line)
 			return (-1);
 		}
 	}
-	return (copy_line(f, line, NULL));
+	return (f->buf && join_line(f, line, f->buf));
 }
 
 int				get_next_line(const int fd, char **line)
@@ -93,8 +90,9 @@ int				get_next_line(const int fd, char **line)
 	t_file			*f;
 	int				r;
 
-	if (!(f = search_fd(&l, fd)) || (r = read_line(f, line)) < 0)
+	if (!(f = search_fd(&l, fd)))
 		return (-1);
+	r = read_line(f, line);
 	(r < 1) ? free(f) : (l = f);
 	return (r);
 }
