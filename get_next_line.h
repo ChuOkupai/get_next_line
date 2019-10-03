@@ -6,7 +6,7 @@
 /*   By: asoursou <asoursou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/10 14:56:36 by asoursou          #+#    #+#             */
-/*   Updated: 2019/10/01 21:09:43 by asoursou         ###   ########.fr       */
+/*   Updated: 2019/10/03 20:14:17 by asoursou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,6 @@
 # include <libft.h>
 # define BUFF_SIZE 32
 
-typedef struct	s_file
-{
-	char			*buf;
-	int				fd;
-	struct s_file	*next;
-}				t_file;
-
-int				get_next_line(const int fd, char **line);
+int	get_next_line(const int fd, char **line);
 
 #endif
