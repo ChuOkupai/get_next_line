@@ -1,4 +1,1 @@
-[submodule "libft"]
-	path = libft
-	url = git@github.com:ChuOkupai/libft.git
-	branch = master
+
